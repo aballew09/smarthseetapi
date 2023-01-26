@@ -1,0 +1,97 @@
+// Replace YOUR_SMARTSHEET_ACCESS_TOKEN with your actual Smartsheet access token 
+
+var smartsheetAccessToken = 'YOUR_SMARTSHEET_ACCESS_TOKEN'; 
+
+ 
+
+// Replace YOUR_NETSUITE_SEARCH_ID with the ID of your NetSuite search 
+
+var searchId = 'YOUR_NETSUITE_SEARCH_ID'; 
+
+ 
+
+// Execute the NetSuite search and retrieve the results 
+
+var searchResult = nlapiSearchRecord(null, searchId); 
+
+ 
+
+// Check if the search returned any results 
+
+if (searchResult && searchResult.length > 0) { 
+
+  // Build an array of rows to be added to the Smartsheet sheet 
+
+  var rows = []; 
+
+  for (var i = 0; i < searchResult.length; i++) { 
+
+    var row = { 
+
+      cells: [] 
+
+    }; 
+
+    // Add a cell for each column in the search result 
+
+    for (var j = 0; j < searchResult[i].getAllColumns().length; j++) { 
+
+      var column = searchResult[i].getAllColumns()[j]; 
+
+      var cell = { 
+
+        columnId: column.getId(), 
+
+        value: searchResult[i].getValue(column) 
+
+      }; 
+
+      row.cells.push(cell); 
+
+    } 
+
+    rows.push(row); 
+
+  } 
+
+   
+
+  // Use the Smartsheet API to create a new sheet or update an existing sheet with the data from the NetSuite search 
+
+  var options = { 
+
+    headers: { 
+
+      'Authorization': 'Bearer ' + smartsheetAccessToken, 
+
+      'Content-Type': 'application/json' 
+
+    } 
+
+  }; 
+
+  var apiUrl = 'https://api.smartsheet.com/2.0/sheets'; 
+
+  var payload = { 
+
+    rows: rows 
+
+  }; 
+
+  var response = nlapiRequestURL(apiUrl, JSON.stringify(payload), options, 'POST'); 
+
+  if (response.getCode() == 200) { 
+
+    // Success! The data was added to the Smartsheet sheet 
+
+    nlapiLogExecution('DEBUG', 'Success', 'The data was added to the Smartsheet sheet'); 
+
+  } else { 
+
+    // An error occurred 
+
+    nlapiLogExecution('ERROR', 'Error', 'An error occurred while adding the data to the Smartsheet sheet: ' + response.getBody()); 
+
+  } 
+
+} 
